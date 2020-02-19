@@ -2,6 +2,7 @@
 namespace app\index\controller;
 use think\Controller;
 use think\Request;
+use think\Db;
 use app\commonClasses\ResData;
 
 class Index extends Controller
@@ -16,17 +17,31 @@ class Index extends Controller
         $account = $request->param('account');
         $password = $request->param('password');
         $resData = new ResData(0, "账号或密码错误", array());
-        if($account == "chenwang" && $password == "cccccc"){
+        $data = Db::name('users')
+            ->where('name', $account)
+            ->where('password', $password)
+            ->select();
+
+        if(count($data) == 1){
+            $pictures = Db::name('pictures')->select();
+
             $resData->setData(1, "成功登录！", array(
                 'imgBase' => '/pictures',
-                'imgs' => array(
-                    '/beauty01.png', 
-                    '/beauty02.png',
-                    '/beauty03.png', 
-                    '/beauty04.png',
-                    '/beauty05.png', 
-                    '/beauty06.png'
-                )
+                'imgs' => $pictures
+            ));
+        }
+
+        return json_encode($resData->resData);
+    }
+
+    public function getDetail(Request $request){
+        $code = $request->param('code');
+        $data = Db::name('mapping')->where('code', $code)->select();
+        $resData = new ResData(0, "没有更多图片了！", array());
+        if($data[0]['count'] != 0){
+            $resData->setData(1, "可以看到更多图片了！", array(
+                'prefix' => $data[0]['prefix_name'],
+                'count' => $data[0]['count']
             ));
         }
 
